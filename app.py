@@ -3,8 +3,11 @@ import sqlite3
 import numpy as np
 import pandas as pd
 from PIL import Image
+import tensorflow as tf
 from tensorflow.keras.models import load_model
 import plotly.express as px
+import os
+import requests
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
@@ -79,17 +82,29 @@ def login_user(username,password):
     )
     return c.fetchone()
 
-# ---------------- MODEL ----------------
+# ---------------- MODEL LOADING (ONEDRIVE DETOUR) ----------------
 @st.cache_resource
 def load_ai_model():
+    model_path = "rice_model.keras"
+    
+    # Your OneDrive download link formatted for direct backend downloading
+    url = "https://1drv.ms/download/c/9452a9ab72438e79/IQCH1QILdjRxRq7VKS0tmChjAXjPeAHUvs6tPXGTWsQWxAv"
+    
     try:
-        return load_model("model/rice_model.keras")
+        # Download the model from OneDrive if it's not present on Streamlit's server
+        if not os.path.exists(model_path):
+            with st.spinner("Downloading AI Model from OneDrive... Please wait (this takes a moment on first boot)."):
+                response = requests.get(url, stream=True)
+                with open(model_path, "wb") as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                        
+        return load_model(model_path)
     except Exception as e:
-        st.error(f"Model Loading error:{e}")
+        st.error(f"Model Loading error: {e}")
         return None
 
 model = load_ai_model()
-
 # ---------------- CLASSES ----------------
 class_names = [
     "Nitrogen Deficiency",
@@ -110,7 +125,10 @@ fertilizers = {
         "Apply DAP fertilizer.",
 
     "Potassium Deficiency":
-        "Apply Potash fertilizer."
+        "Apply Potash fertilizer.",
+        
+    "Not Rice Leaf":
+        "The uploaded image does not appear to be a rice leaf."
 }
 
 # ---------------- PREDICTION ----------------
@@ -336,7 +354,7 @@ to detect nutrient deficiencies in rice leaves.
                 if model is None:
 
                     st.error(
-                        "Model not found. Check rice_nutrient_model.h5"
+                        "Model not loaded correctly. Please verify the Google Drive ID and access permissions."
                     )
 
                 else:
@@ -345,13 +363,13 @@ to detect nutrient deficiencies in rice leaves.
                         image
                     )
 
-                    # Not Rice Leaf
+                    # Not Rice Leaf Threshold check
                     if confidence < 80:
 
                         st.error(
                             "Wrong Image! Please upload a rice leaf image only."
                         )
-                        st.stop
+                        st.stop()
 
                     else:
 
@@ -368,16 +386,15 @@ to detect nutrient deficiencies in rice leaves.
                         )
 
                         st.success(
-                            fertilizers[predicted_class]
+                            fertilizers.get(predicted_class, "No recommendation details found.")
                         )
 
+                        # Populating graph data for all 4 model classes dynamically
+                        confidences_list = [float(p) * 100 for p in prediction[0]]
+                        
                         chart_data = pd.DataFrame({
-                            "Class":class_names,
-                            "Confidence":[
-                                float(prediction[0][0])*100,
-                                float(prediction[0][1])*100,
-                                float(prediction[0][2])*100
-                            ]
+                            "Class": class_names[:len(confidences_list)],
+                            "Confidence": confidences_list
                         })
 
                         fig = px.bar(
