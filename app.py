@@ -82,8 +82,8 @@ def login_user(username,password):
     )
     return c.fetchone()
 
-# ---------------- MODEL LOADING (ONEDRIVE DETOUR) ----------------
-# ---------------- MODEL LOADING ----------------
+---------------- MODEL LOADING ----------------
+
 import os
 import requests
 from tensorflow.keras.models import load_model
@@ -91,50 +91,42 @@ from tensorflow.keras.models import load_model
 @st.cache_resource
 def load_ai_model():
 
-    model_path = "rice_model.keras"
+model_path = "rice_model.keras"
 
-    url = "https://1drv.ms/download/c/9452a9ab72438e79/IQCH1QILdjRxRq7VKS0tmChjAXjPeAHUvs6tPXGTWsQWxAv"
+url = "https://1drv.ms/download/c/9452a9ab72438e79/IQCH1QILdjRxRq7VKS0tmChjAXjPeAHUvs6tPXGTWsQWxAv"
 
-    try:
+try:
 
-        if not os.path.exists(model_path):
+    if not os.path.exists(model_path):
 
-            with st.spinner("Downloading AI Model..."):
+        with st.spinner("Downloading AI Model... Please wait"):
 
-                response = requests.get(url, stream=True)
+            response = requests.get(url, stream=True)
 
-                with open(model_path, "wb") as f:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        if chunk:
-                            f.write(chunk)
+            with open(model_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
 
-        model = load_model(model_path)
+    model = load_model(model_path)
 
-        return model
+    return model
 
-    except Exception as e:
+except Exception as e:
 
-        st.error(f"Model Loading Error: {e}")
+    st.error(f"Model Loading Error: {e}")
 
-        return None
-
+    return None
 
 model = load_ai_model()
 
-# Check model
-if model is not None:
-    st.success("✅ Model Loaded Successfully")
-    st.write("Model Output Shape:", model.output_shape)
-else:
-    st.error("❌ Model Not Loaded")
-# ---------------- CLASSES ----------------
-class_names = [
-    "Nitrogen Deficiency",
-    "Phosphorus Deficiency",
-    "Potassium Deficiency",
-    "Not Rice Leaf"
-]
+---------------- CLASSES ----------------
 
+class_names = [
+"Nitrogen Deficiency",
+"Phosphorus Deficiency",
+"Potassium Deficiency"
+]
 # ---------------- RECOMMENDATIONS ----------------
 fertilizers = {
     "Healthy":
