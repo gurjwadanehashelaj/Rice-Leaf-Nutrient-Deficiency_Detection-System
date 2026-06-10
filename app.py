@@ -83,28 +83,50 @@ def login_user(username,password):
     return c.fetchone()
 
 # ---------------- MODEL LOADING (ONEDRIVE DETOUR) ----------------
+# ---------------- MODEL LOADING ----------------
+import os
+import requests
+from tensorflow.keras.models import load_model
+
 @st.cache_resource
 def load_ai_model():
+
     model_path = "rice_model.keras"
-    
-    # Your OneDrive download link formatted for direct backend downloading
+
     url = "https://1drv.ms/download/c/9452a9ab72438e79/IQCH1QILdjRxRq7VKS0tmChjAXjPeAHUvs6tPXGTWsQWxAv"
-    
+
     try:
-        # Download the model from OneDrive if it's not present on Streamlit's server
+
         if not os.path.exists(model_path):
-            with st.spinner("Downloading AI Model from OneDrive... Please wait (this takes a moment on first boot)."):
+
+            with st.spinner("Downloading AI Model..."):
+
                 response = requests.get(url, stream=True)
+
                 with open(model_path, "wb") as f:
                     for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
-                        
-        return load_model(model_path)
+                        if chunk:
+                            f.write(chunk)
+
+        model = load_model(model_path)
+
+        return model
+
     except Exception as e:
-        st.error(f"Model Loading error: {e}")
+
+        st.error(f"Model Loading Error: {e}")
+
         return None
 
+
 model = load_ai_model()
+
+# Check model
+if model is not None:
+    st.success("✅ Model Loaded Successfully")
+    st.write("Model Output Shape:", model.output_shape)
+else:
+    st.error("❌ Model Not Loaded")
 # ---------------- CLASSES ----------------
 class_names = [
     "Nitrogen Deficiency",
