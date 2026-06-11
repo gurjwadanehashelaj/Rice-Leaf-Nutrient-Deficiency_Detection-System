@@ -80,10 +80,25 @@ def login_user(username,password):
     return c.fetchone()
 
 # ---------------- MODEL ----------------
+import os
+import gdown
+from tensorflow.keras.models import load_model
+
 @st.cache_resource
 def load_ai_model():
+
+    model_path = "rice_model.keras"
+
+    if not os.path.exists(model_path):
+
+        file_id = "1N-Un7nx3dqWwzyV7d-REkv363Tr0uEgM"
+
+        url = f"https://drive.google.com/uc?id={file_id}"
+
+        gdown.download(url, model_path, quiet=False)
+
     try:
-        return load_model("model/rice_model.keras")
+        return load_model(model_path)
     except Exception as e:
         st.error(f"Model Loading Error: {e}")
         return None
