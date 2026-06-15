@@ -224,6 +224,8 @@ if not st.session_state.logged_in:
 else:
 
     st.sidebar.title("🌾 Navigation")
+    t.sidebar.write("Select a page")
+
 
     st.sidebar.success(
         f"Welcome {st.session_state.username}"
