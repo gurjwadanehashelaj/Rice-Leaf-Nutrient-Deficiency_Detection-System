@@ -380,11 +380,12 @@ to detect nutrient deficiencies in rice leaves.
                         st.subheader(
                             "💊 Fertilizer Recommendation"
                         )
-
                         st.success(
-                            fertilizers[predicted_class]
-                        )
-
+                             fertilizers.get(
+                                 predicted_class,
+                                 "Apply recommended fertilizer based on expert advice."
+                                       )
+                                       )
                         chart_data = pd.DataFrame({
                             "Class": class_names,
                             "Confidence": [
